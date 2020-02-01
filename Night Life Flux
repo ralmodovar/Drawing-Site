@@ -1,0 +1,28 @@
+var dataset1 = ee.ImageCollection('NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG')
+                  .filter(ee.Filter.date('2014-01-01', '2014-12-31')).select('avg_rad');
+var nighttime1 = dataset1.mode().rename('b1');
+
+var dataset2 = ee.ImageCollection('NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG')
+                  .filter(ee.Filter.date('2016-01-01', '2016-12-31')).select('avg_rad');
+var nighttime2 = dataset2.mode().rename('b2');
+
+var dataset3 = ee.ImageCollection('NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG')
+                  .filter(ee.Filter.date('2018-01-01', '2018-12-31')).select('avg_rad');
+var nighttime3 = dataset3.mode().rename('b3');
+
+var multiband = ee.Image([nighttime1, nighttime2, nighttime3]);
+
+Map.addLayer(multiband, {bands: ["b1", "b2", "b3"], min:0, max:1, opacity:1})
+
+
+//var collectionFromImages = lights.visualize({
+//  bands: ['ndvi1', 'ndvi2', 'ndvi3'],
+//  min:0, max:1
+//});
+
+//Export.image.toDrive({
+//  image: lightsRGB,
+//  description: 'lightsRGB',
+//  crs: 'EPSG:3857',
+//  scale: 30
+//});
