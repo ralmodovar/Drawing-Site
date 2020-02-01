@@ -1,0 +1,108 @@
+/**
+ * Function to mask clouds using the Sentinel-2 QA band
+ * @param {ee.Image} image Sentinel-2 image
+ * @return {ee.Image} cloud masked Sentinel-2 image
+ */
+function maskS2clouds(image) {
+  var qa = image.select('QA60');
+
+  // Bits 10 and 11 are clouds and cirrus, respectively.
+  var cloudBitMask = 1 << 10;
+  var cirrusBitMask = 1 << 11;
+
+  // Both flags should be set to zero, indicating clear conditions.
+  var mask = qa.bitwiseAnd(cloudBitMask).eq(0)
+      .and(qa.bitwiseAnd(cirrusBitMask).eq(0));
+
+  return image.updateMask(mask).divide(10000);
+}
+
+// Map the function over one year of data and take the median.
+// Load Sentinel-2 TOA reflectance data.
+var dataset = ee.ImageCollection('COPERNICUS/S2')
+                  .filterDate('2017-08-01', '2018-09-30')
+                  // Pre-filter to get less cloudy granules.
+                  .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 30))
+                  .map(maskS2clouds)
+                  .median();
+
+var minimum = 0;
+var maximum = 0.5;
+var rgbVis = {
+  min: minimum,
+  max: maximum,
+  bands: ['B4', 'B3', 'B2'],
+};
+
+Map.addLayer(dataset, rgbVis, 'RGB');
+
+var trueColorRGB = dataset.visualize({
+  bands: ['B4', 'B3', 'B2'],
+  min:minimum, max:maximum
+});
+
+Export.image.toDrive({
+ image: trueColorRGB,
+ description: 'trueColor',
+ crs: 'EPSG:3857',
+ scale: 10,
+});
+
+//////////////////////////////////
+
+var dataset1 = ee.ImageCollection('NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG')
+                  .filter(ee.Filter.date('2014-01-01', '2014-12-31')).select('avg_rad');
+var nighttime1 = dataset1.mode().rename('b1');
+
+Map.addLayer(nighttime1, {min:0, max:1, opacity:1});
+
+Export.image.toDrive({
+ image: nighttime1,
+ description: 'nightLights',
+ crs: 'EPSG:3857',
+ scale: 100,
+});
+
+//////////////////////////////////
+
+// Load the SRTM image.
+var srtm = ee.Image('CGIAR/SRTM90_V4');
+
+// Apply an algorithm to an image.
+var slope = ee.Terrain.slope(srtm);
+
+// Display the result.
+
+var aspect = ee.Terrain.aspect(srtm);
+
+// Convert to radians, compute the sin of the aspect.
+var sinImage = aspect.divide(180).multiply(Math.PI).sin();
+
+// Display the result.
+Map.addLayer(sinImage, {min: -1, max: 1}, 'sin');
+//Map.addLayer(slope, {min: 0, max :10}, 'slope');
+Map.addLayer(srtm, {min: 400, max :2600}, 'srtm');
+
+var srtm = srtm.visualize({min: 900, max :1200});
+Export.image.toDrive({
+  image: srtm,
+  description: 'srtm',
+  crs: 'EPSG:3857',
+  scale: 10
+});
+
+var slope = slope.visualize({min: 900, max :1200});
+Export.image.toDrive({
+  image: slope,
+  description: 'slope',
+  crs: 'EPSG:3857',
+  scale: 10
+});
+
+var sinImage = sinImage.visualize({min: 900, max :1200});
+Export.image.toDrive({
+  image: sinImage,
+  description: 'sinImage',
+  crs: 'EPSG:3857',
+  scale: 10
+});
