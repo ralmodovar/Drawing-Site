@@ -1,0 +1,57 @@
+//intra annual NDVI comparison (seasonality) for harvest dates, burn scars
+//rgb composites of ndvi's for different groups of months to ID plants or harvest
+
+var L81 = ee.ImageCollection("LANDSAT/LC08/C01/T1")
+  .filterDate('2018-01-01','2018-12-31')
+  .filter(ee.Filter.calendarRange(4,5,'month'))
+  
+var L82 = ee.ImageCollection("LANDSAT/LC08/C01/T1")
+  .filterDate('2018-01-01','2018-12-31')
+  .filter(ee.Filter.calendarRange(6,7,'month'))
+  
+var L83 = ee.ImageCollection("LANDSAT/LC08/C01/T1")
+  .filterDate('2018-01-01','2018-12-31')
+  .filter(ee.Filter.calendarRange(8,9,'month'))
+  
+var composite1 = ee.Algorithms.Landsat.simpleComposite({
+  collection:L81,
+  asFloat:true
+})
+
+var composite2 = ee.Algorithms.Landsat.simpleComposite({
+  collection:L82,
+  asFloat:true
+})
+
+var composite3 = ee.Algorithms.Landsat.simpleComposite({
+  collection:L83,
+  asFloat:true
+})
+  
+var nir1 = composite1.select("B5")
+var red1 = composite1.select("B4")
+var ndvi1 = nir1.subtract(red1).divide(nir1.add(red1))  
+var nir2 = composite2.select("B5")
+var red2 = composite2.select("B4")
+var ndvi2 = nir2.subtract(red2).divide(nir2.add(red2))
+var nir3 = composite3.select("B5")
+var red3 = composite3.select("B4")
+var ndvi3 = nir3.subtract(red3).divide(nir3.add(red3))
+
+var ndvis = composite1
+  .addBands(ndvi1.rename('ndvi1'))
+  .addBands(ndvi2.rename('ndvi2'))
+  .addBands(ndvi3.rename('ndvi3'))
+  
+Map.addLayer(ndvis, {bands: ["ndvi1", "ndvi2", "ndvi3"], min:-0.2, max:1, opacity:1})
+var ndviRGB = ndvis.visualize({
+  bands: ['ndvi1', 'ndvi2', 'ndvi3'],
+  min:-0.2, max:1
+});
+
+Export.image.toDrive({
+  image: ndviRGB,
+  description: 'ndviRGB',
+  crs: 'EPSG:3857',
+  scale: 10
+});
