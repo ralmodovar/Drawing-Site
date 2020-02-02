@@ -1,0 +1,45 @@
+//rgb composite river meanders
+var L81 = ee.ImageCollection("LANDSAT/LC08/C01/T1")
+  .filterDate('2013-01-01','2013-12-31')
+  .filter(ee.Filter.calendarRange(1,12,'month'))  
+var L82 = ee.ImageCollection("LANDSAT/LC08/C01/T1")
+  .filterDate('2016-01-01','2016-12-31')
+  .filter(ee.Filter.calendarRange(1,12,'month'))  
+var L83 = ee.ImageCollection("LANDSAT/LC08/C01/T1")
+  .filterDate('2019-01-01','2019-12-31')
+  .filter(ee.Filter.calendarRange(1,12,'month'))  
+var composite1 = ee.Algorithms.Landsat.simpleComposite({
+  collection:L81,
+  asFloat:true})
+var composite2 = ee.Algorithms.Landsat.simpleComposite({
+  collection:L82,
+  asFloat:true})
+var composite3 = ee.Algorithms.Landsat.simpleComposite({
+  collection:L83,
+  asFloat:true})
+
+var aero_1 = composite1.select("B1")
+var nir_1 = composite1.select("B5")
+var river_1 = aero_1.divide(nir_1) 
+
+var aero_2 = composite2.select("B1")
+var nir_2 = composite2.select("B5")
+var river_2 = aero_2.divide(nir_2)
+
+var aero_3 = composite3.select("B1")
+var nir_3 = composite3.select("B5")
+var river_3 = aero_3.divide(nir_3)
+
+var rivers = composite1
+  .addBands(river_1.rename('river_1'))
+  .addBands(river_2.rename('river_2'))
+  .addBands(river_3.rename('river_3'))  
+Map.addLayer(rivers, {bands: ["river_1", "river_2", "river_3"], min:0, max:5, opacity:1})
+var nbrRGB = rivers.visualize({
+  bands: ['river_1', 'river_2', 'river_3'],
+  min:0, max:5});
+Export.image.toDrive({
+  image: nbrRGB,
+  description: 'nbrRGB',
+  crs: 'EPSG:3857',
+  scale: 30});
