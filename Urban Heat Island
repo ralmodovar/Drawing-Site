@@ -1,0 +1,39 @@
+//rgb composite river meanders
+var L81 = ee.ImageCollection("LANDSAT/LC08/C01/T1")
+  .filterDate('2013-01-01','2013-12-31')
+  .filter(ee.Filter.calendarRange(6,8,'month'))  
+var L82 = ee.ImageCollection("LANDSAT/LC08/C01/T1")
+  .filterDate('2016-01-01','2016-12-31')
+  .filter(ee.Filter.calendarRange(6,8,'month'))  
+var L83 = ee.ImageCollection("LANDSAT/LC08/C01/T1")
+  .filterDate('2019-01-01','2019-12-31')
+  .filter(ee.Filter.calendarRange(6,8,'month'))  
+var composite1 = ee.Algorithms.Landsat.simpleComposite({
+  collection:L81,
+  asFloat:true})
+var composite2 = ee.Algorithms.Landsat.simpleComposite({
+  collection:L82,
+  asFloat:true})
+var composite3 = ee.Algorithms.Landsat.simpleComposite({
+  collection:L83,
+  asFloat:true})
+
+
+var heat_1 = composite1.select("B6")
+var heat_2 = composite2.select("B6")
+var heat_3 = composite3.select("B6")
+
+
+var heats = composite1
+  .addBands(heat_1.rename('heat_1'))
+  .addBands(heat_2.rename('heat_2'))
+  .addBands(heat_3.rename('heat_3'))  
+Map.addLayer(heats, {bands: ["heat_1", "heat_2", "heat_3"], min:0, max:1, opacity:1})
+var heatRGB = heats.visualize({
+  bands: ['heat_1', 'heat_2', 'heat_3'],
+  min:0, max:1});
+Export.image.toDrive({
+  image: heatRGB,
+  description: 'heatRGB',
+  crs: 'EPSG:3857',
+  scale: 30});
