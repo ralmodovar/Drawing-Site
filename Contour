@@ -1,6 +1,9 @@
 //Landsat 8 monochrome and color images 
  
-Map.setCenter(126.650471, 37.965469, 12);          //map center in longitude, latitude (x,y) and zoom level (larger numbers mean closer view)
+Map.setCenter(118.771756, 9.901765, 20);           //map center in longitude, latitude (x,y) and zoom level (larger numbers mean closer view)
+
+var minimum = 0;
+var maximum = 1800;
 
 //NED coverage in US only at 10 meters per pixel, SRTM worldwide at 30 meters per pixel. Switch the double slashes in front of "var elevation" to change datasets.
 
@@ -16,7 +19,7 @@ var aspect = ee.Terrain.aspect(elevation);                              //what d
 
 /////////////////////////////////////
 
-var lines = ee.List.sequence(-10, 100, 2);
+var lines = ee.List.sequence(minimum, maximum, 20);
  
 var contourlines = lines.map(function(line) {
 var mycontour = elevation
@@ -29,7 +32,7 @@ contourlines = ee.ImageCollection(contourlines).mosaic();
 
 /////////////////////////////////////
 
-var elevationVis = {min: -5, max: 50.0, gamma: 1.5};
+var elevationVis = {min: minimum, max: maximum, gamma: 1.5};
 Map.addLayer(elevation, elevationVis, 'Elevation');
 
 var slopeVis = {min: 0, max: 60, gamma: 2};
@@ -41,7 +44,7 @@ Map.addLayer(hillshade, hillshadeVis, 'Hillshade');
 var aspectVis = {min: 0, max: 359, gamma: 1};
 Map.addLayer(aspect, aspectVis, 'Aspect');
 
-var contourVis = {min: -10, max: 100, palette:['00ff00', 'ff0000']};
+var contourVis = {min: minimum, max: maximum, palette:['00ff00', 'ff0000']};
 Map.addLayer(contourlines, contourVis, 'contours');
 
 var elevation = elevation.visualize(elevationVis);
