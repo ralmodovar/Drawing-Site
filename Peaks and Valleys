@@ -5,5 +5,5 @@ var srtmMtpiVis = {
   max: 200.0,
   palette: ['0b1eff', '4be450', 'fffca4', 'ffa011', 'ff0000'],
 };
-Map.setCenter(-105.8636, 40.3439, 11);
+Map.setCenter(120.144559, 12.046140, 11);
 Map.addLayer(srtmMtpi, srtmMtpiVis, 'SRTM mTPI');
